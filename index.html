@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block base %}
+
+<div class="d-flex align-items-baseline">
+    <div class="col-md-4">
+        <h3>Description:</h3>
+        <p>
+            LaMoinsChère is a Python project based in an external <a href="https://data.economie.gouv.fr/explore/dataset/prix-carburants-fichier-instantane-test-ods-copie/information/">API</a>, provided by French Government.
+            This application show us the cheapest gas station given the carburant type and the frech department. 
+            The code can be checked in my <a href="" target="_blank"> github repository</a>.
+        </p>
+        <h3>Libraries:</h3>
+        <ul>
+            <li>Requests</li>
+            <li>Json</li>
+        </ul>
+    </div>
+    
+    <div class="col-xl-12">
+        <!-- Main -->
+            <div class="container pt-5">
+                <div class="row justify-content-md-center">
+                    <div class="col-md-10">
+                        <h1>LaMoinsChère</h1>
+
+                        <form action="" id="post-form">
+                            <!-- Input -->
+                                {% csrf_token %}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="Prix_nom">Choisissez le type de carburant:</label>
+                                        <select class="form-control" id="prix_nom">
+                                            {% for carburant in carburants %}
+                                                <option value="{{ carburant }}">{{carburant}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="Dep_name">Choisissez le département:</label>
+                                        <select class="form-control" id="dep_name">
+                                            {% for dep in departements %}
+                                                <option value="{{ dep.dep_name }}">{{dep.num_dep}} - {{ dep.dep_name }} - {{dep.region_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <option value="false" id="next"></option>
+
+                                    <button type="submit" value="Submit" class="btn btn-primary" data-toggle="" data-target="#exampleTable">Chercher</button>
+                                </div>
+                            <br/>
+                            <!-- Table -->
+                                <div class="col-xl-11">
+                                    <div id="exampleTable" tabindex="-1" role="dialog">
+                                        <div class="" role="document">
+                                            <form action="" id="post-form">
+                                                <h1>Résultats</h1>
+                                                <h3><span id="pn"></span><span id="dn"></span></h3>
+                                                <table class="table">
+                                                    <thead>
+                                                    <tr>
+                                                    <th scope="col">Prix</th>
+                                                    <th scope="col">Adresse</th>
+                                                    <th scope="col">Ville</th>
+                                                    <th scope="col">CP</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="table">
+                                                                                    
+                                                    </tbody>
+                                                </table>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                        </form>
+
+                        <!-- script -->
+                            <script>
+                                $(document).on('submit', '#post-form', function(e){
+                                    e.preventDefault();
+                                    $.ajax({
+                                        type:'POST',
+                                        url:'{% url "lamoinschere:search" %}',
+                                        data:{
+                                            prix_nom:$('#prix_nom').val(),
+                                            dep_name:$('#dep_name').val(),
+                                            next:$('#next').val(),
+
+                                            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+                                            action: 'post',
+                                        },
+                                        success:function(json) {
+                                            document.forms["post-form"].reset();
+                                            document.getElementById("pn").innerHTML = json['prix_nom']+' - '
+                                            document.getElementById("dn").innerHTML = json['dep_name']
+                                            $('#table').empty();
+                                            jQuery.each(json['items'], function(index, item) {
+                                                var result = "<tr>"
+                                                    + "<td>"+item.prix_valeur+"</td>"
+                                                    + "<td>"+item.adresse+"</td>"
+                                                    + "<td>"+item.ville+"</td>"
+                                                    + "<td>"+item.cp+"</td>"
+                                                    + "</tr>"
+                                                $('#table').append(result)
+                                            })
+                                        },
+                                        error : function(xhr,errmsg,err) {
+
+                                        }
+                                    });
+                                })
+
+                            </script>
+                    </div>
+
+                </div>
+            </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
